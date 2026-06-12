@@ -64,7 +64,7 @@ src/
 ## Installation
 
 ```bash
-git clone https://github.com/your-username/inevesht-frontend.git
+git clone https://github.com/parsaasadzadeh/inevesht-frontend.git
 cd inevesht-frontend
 npm install
 ```
@@ -106,4 +106,4 @@ The application supports persistent authentication with intelligent token storag
 
 ## Author
 
-Developed by [Your Name]
+Developed by [Parsa Asadzadeh]
