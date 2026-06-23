@@ -208,7 +208,7 @@ export default function ContactUs() {
                                             }}
                                         >
                                             <img
-                                                src={`${BASE_URL}/captcha.png?key=${captchaKey}`}
+                                                src={`${BASE_URL}/captcha.svg?key=${captchaKey}`}
                                                 alt="Captcha"
                                                 onClick={handleRefreshCaptcha}
                                                 style={{
