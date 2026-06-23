@@ -96,12 +96,10 @@ export const getDashboardPosts = async (token) => {
 
 // Fetch captcha
 export const getCaptcha = async () => {
-    // Fetching directly since the output is Base64, which is easier to handle this way
-    const res = await fetch(`${BASE_URL}/captcha.png`);
+    const res = await fetch(`${BASE_URL}/captcha.svg`);
     const data = await res.text();
     return data;
 };
-
 
 
 
