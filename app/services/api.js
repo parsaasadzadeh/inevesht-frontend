@@ -1,6 +1,6 @@
 // services/api.js
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://inevesht-backend-weblog.vercel.app";
 
 async function fetchApi(endpoint, options = {}) {
     try {
@@ -100,6 +100,7 @@ export const getCaptcha = async () => {
     const data = await res.text();
     return data;
 };
+
 
 
 
