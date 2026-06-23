@@ -210,7 +210,7 @@ export default function DashboardPage() {
                                         {/* Thumbnail Column */}
                                         <td className="p-4">
                                             <img
-                                                src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/thumbnails/${post.thumbnail}`}
+                                                src={`${post.thumbnail}`}
                                                 alt={post.title}
                                                 className="w-16 h-16 object-cover rounded shadow-sm"
                                             />
