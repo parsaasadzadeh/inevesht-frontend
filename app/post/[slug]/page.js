@@ -74,7 +74,7 @@ export default async function SinglePost({ params }) {
           <main className="sp-main">
             <figure className="sp-hero-figure">
               <img
-                src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/thumbnails/${post.thumbnail}`}
+                src={`${post.thumbnail}`}
                 alt={post.title}
                 className="sp-hero-img"
               />
