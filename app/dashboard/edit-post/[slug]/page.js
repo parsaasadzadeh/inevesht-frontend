@@ -258,7 +258,7 @@ export default function EditPostPage({ params }) {
               {currentImage && !formData.thumbnail && (
                 <div className="ep-preview-wrap">
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/thumbnails/${currentImage}`}
+                    src={`${currentImage}`}
                     alt="تصویر فعلی"
                     className="ep-preview-img"
                   />
