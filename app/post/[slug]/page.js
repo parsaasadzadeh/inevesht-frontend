@@ -1,26 +1,21 @@
 import Link from "next/link";
 import { getSinglePost, getAllPosts } from "../../services/api";
 import { notFound } from "next/navigation";
-
-// ✅ Pre-generate all routes statically (for sitemap and performance)
 export async function generateStaticParams() {
   try {
     const data = await getAllPosts();
     const posts = data?.posts || [];
     return posts
-      .filter((post) => post?.slug) // فقط پست‌هایی که اسلاگ معتبر دارن
+      .filter((post) => post?.slug) 
       .map((post) => ({
         slug: post.slug,
       }));
   } catch (err) {
-    // اگه موقع build، API در دسترس نباشه، اجازه نده کل build بترکه.
-    // به جاش هیچ مسیری از پیش ساخته نمی‌شه و همه روی-تقاضا (on-demand) ساخته می‌شن.
     console.error("generateStaticParams failed:", err);
     return [];
   }
 }
 
-// ✅ Dynamic metadata for SEO
 export async function generateMetadata({ params }) {
   const { slug } = await params;
 
@@ -40,7 +35,7 @@ export async function generateMetadata({ params }) {
       description: plainText,
       openGraph: {
         title: post.title,
-        images: post.thumbnail ? [`${baseUrl}/uploads/thumbnails/${post.thumbnail}`] : [],
+        images: post.thumbnail ? [`${post.thumbnail}`] : [],
       },
     };
   } catch (err) {
@@ -64,7 +59,7 @@ export default async function SinglePost({ params }) {
     const data = await getSinglePost(slug);
     post = data?.post || null;
   } catch (err) {
-    // هر خطایی (شبکه، ۴۰۴، ۵۰۰، JSON نامعتبر و ...) اینجا گرفته می‌شه
+
     console.error("SinglePost fetch failed for slug:", slug, err);
     notFound();
   }
@@ -73,7 +68,7 @@ export default async function SinglePost({ params }) {
     notFound();
   }
 
-  // JSON-LD structured data for SEO
+
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
   const jsonLd = {
     "@context": "https://schema.org",
@@ -84,7 +79,7 @@ export default async function SinglePost({ params }) {
     author: { "@type": "Person", name: post.user?.fullname || "مدیر سایت" },
   };
 
-  // فرمت تاریخ هم داخل try بگیریم چون new Date(undefined) می‌تونه Invalid Date بده
+  
   let formattedDate = "";
   try {
     formattedDate = post.createdAt
