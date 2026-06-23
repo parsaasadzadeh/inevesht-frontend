@@ -4,27 +4,47 @@ import { notFound } from "next/navigation";
 
 // ✅ Pre-generate all routes statically (for sitemap and performance)
 export async function generateStaticParams() {
-  const data = await getAllPosts();
-  return (data?.posts || []).map((post) => ({
-    slug: post.slug,
-  }));
+  try {
+    const data = await getAllPosts();
+    const posts = data?.posts || [];
+    return posts
+      .filter((post) => post?.slug) // فقط پست‌هایی که اسلاگ معتبر دارن
+      .map((post) => ({
+        slug: post.slug,
+      }));
+  } catch (err) {
+    // اگه موقع build، API در دسترس نباشه، اجازه نده کل build بترکه.
+    // به جاش هیچ مسیری از پیش ساخته نمی‌شه و همه روی-تقاضا (on-demand) ساخته می‌شن.
+    console.error("generateStaticParams failed:", err);
+    return [];
+  }
 }
 
 // ✅ Dynamic metadata for SEO
 export async function generateMetadata({ params }) {
   const { slug } = await params;
+
   try {
-    const data = await getSinglePost(decodeURIComponent(slug));
-    const post = data.post;
+    const data = await getSinglePost(slug);
+    const post = data?.post;
+
+    if (!post) {
+      return { title: "مقاله یافت نشد" };
+    }
+
+    const plainText = (post.body || "").replace(/<[^>]+>/g, "").substring(0, 160);
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+
     return {
       title: `${post.title} | وبلاگ من`,
-      description: post.body?.replace(/<[^>]+>/g, "").substring(0, 160),
+      description: plainText,
       openGraph: {
         title: post.title,
-        images: [`${process.env.NEXT_PUBLIC_API_URL}/uploads/thumbnails/${post.thumbnail}`],
+        images: post.thumbnail ? [`${baseUrl}/uploads/thumbnails/${post.thumbnail}`] : [],
       },
     };
-  } catch {
+  } catch (err) {
+    console.error("generateMetadata failed for slug:", slug, err);
     return { title: "مقاله یافت نشد" };
   }
 }
@@ -34,25 +54,45 @@ export const revalidate = 60;
 export default async function SinglePost({ params }) {
   const { slug } = await params;
 
-  let post;
-  try {
-    const data = await getSinglePost(decodeURIComponent(slug));
-    post = data.post;
-  } catch {
+  if (!slug) {
     notFound();
   }
 
-  if (!post) notFound();
+  let post = null;
+
+  try {
+    const data = await getSinglePost(slug);
+    post = data?.post || null;
+  } catch (err) {
+    // هر خطایی (شبکه، ۴۰۴، ۵۰۰، JSON نامعتبر و ...) اینجا گرفته می‌شه
+    console.error("SinglePost fetch failed for slug:", slug, err);
+    notFound();
+  }
+
+  if (!post) {
+    notFound();
+  }
 
   // JSON-LD structured data for SEO
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
-    image: `${process.env.NEXT_PUBLIC_API_URL}/uploads/thumbnails/${post.thumbnail}`,
+    image: post.thumbnail ? `${baseUrl}/uploads/thumbnails/${post.thumbnail}` : undefined,
     datePublished: post.createdAt,
     author: { "@type": "Person", name: post.user?.fullname || "مدیر سایت" },
   };
+
+  // فرمت تاریخ هم داخل try بگیریم چون new Date(undefined) می‌تونه Invalid Date بده
+  let formattedDate = "";
+  try {
+    formattedDate = post.createdAt
+      ? new Date(post.createdAt).toLocaleDateString("fa-IR")
+      : "";
+  } catch {
+    formattedDate = "";
+  }
 
   return (
     <>
@@ -72,23 +112,25 @@ export default async function SinglePost({ params }) {
           </aside>
 
           <main className="sp-main">
-            <figure className="sp-hero-figure">
-              <img
-                src={`${post.thumbnail}`}
-                alt={post.title}
-                className="sp-hero-img"
-              />
-            </figure>
+            {post.thumbnail && (
+              <figure className="sp-hero-figure">
+                <img
+                  src={post.thumbnail}
+                  alt={post.title || ""}
+                  className="sp-hero-img"
+                />
+              </figure>
+            )}
 
             <article className="sp-article">
               <h1 className="sp-article-title">{post.title}</h1>
               <div className="sp-article-meta">
                 <span>توسط {post.user?.fullname || "مدیر سایت"}</span>
-                <span>{new Date(post.createdAt).toLocaleDateString("fa-IR")}</span>
+                {formattedDate && <span>{formattedDate}</span>}
               </div>
               <div
                 className="sp-content"
-                dangerouslySetInnerHTML={{ __html: post.body }}
+                dangerouslySetInnerHTML={{ __html: post.body || "" }}
               />
             </article>
 
