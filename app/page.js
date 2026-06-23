@@ -1,50 +1,65 @@
-// Blog homepage - lists all articles with filter support
-// This is a Server Component and fetches data directly from the API
+// صفحه اصلی وبلاگ - نمایش لیست مقالات با قابلیت فیلتر
+// این یک Server Component است و داده‌ها رو مستقیم از API می‌گیره
 
 import Link from "next/link";
 import { getAllPosts } from "./services/api";
 import SearchBox from "./components/searchBox";
 import { Suspense } from "react";
 
-// Page metadata for SEO
+// متادیتای صفحه برای سئو
 export const metadata = {
   title: "آخرین مقالات | وبلاگ من",
   description: "جدیدترین مطالب آموزشی و تحلیلی را اینجا بخوانید",
 };
 
-// Page revalidates every 60 seconds (ISR)
+// صفحه هر ۶۰ ثانیه یک‌بار به‌روزرسانی می‌شه (ISR)
 export const revalidate = 60;
 
 export default async function HomePage({ searchParams }) {
-  // We await searchParams because it became async in Next.js 15+
+  // searchParams رو await می‌کنیم چون از Next.js 15 به بعد async شده
   const params = await searchParams;
   const filter = params?.filter || "";
 
-  // Fetch all posts from the API
+  // گرفتن همه پست‌ها از API
   const data = await getAllPosts();
   const posts = data?.posts || [];
 
-  // If data is null, the server is offline or returned an error
+  // اگه data نال باشه یعنی سرور خاموشه یا خطا داده
   const isOffline = !data;
 
-  // Filter posts based on search text (case-insensitive)
+  // فیلتر کردن پست‌ها بر اساس متن جستجو (بدون حساسیت به حروف بزرگ/کوچک)
   const filteredPosts = posts.filter((post) =>
     post.title?.toLowerCase().includes(filter.toLowerCase())
   );
 
-  // Strip HTML tags from post content and truncate for excerpt display
+  // حذف تگ‌های HTML از متن پست و کوتاه کردنش برای نمایش خلاصه
+  // نکته مهم: علاوه بر حذف تگ‌ها، باید موجودیت‌های HTML مثل &nbsp; هم دیکود شوند
+  // وگرنه به جای فاصله، خودِ متن &nbsp; توی باکس‌ها نمایش داده می‌شه (همون مشکلی که داشتی)
   function stripHtml(html) {
-    return (html || "").replace(/<[^>]+>/g, "").substring(0, 110);
+    if (!html) return "";
+
+    const decoded = html
+      .replace(/<[^>]+>/g, "")   // حذف تگ‌های HTML
+      .replace(/&nbsp;/g, " ")   // فاصله غیرشکسته -> فاصله معمولی
+      .replace(/&amp;/g, "&")    // علامت &
+      .replace(/&lt;/g, "<")     // علامت کوچک‌تر
+      .replace(/&gt;/g, ">")     // علامت بزرگ‌تر
+      .replace(/&quot;/g, '"')   // گیومه
+      .replace(/&#39;/g, "'")    // آپاستروف
+      .replace(/\s+/g, " ")      // چند فاصله پشت‌سرهم -> یک فاصله
+      .trim();
+
+    return decoded.substring(0, 110);
   }
 
   return (
     <div className="hp-page" dir="rtl">
-      {/* Hero section - title and search box */}
+      {/* بخش هرو - عنوان و باکس جستجو */}
       <div className="hp-hero">
         <h1 className="hp-hero-title">آخرین مقالات وبلاگ</h1>
         <p className="hp-hero-sub">جدیدترین مطالب آموزشی و تحلیلی را اینجا بخوانید</p>
 
-        {/* SearchBox is wrapped in Suspense because it uses useSearchParams */}
+        {/* SearchBox توی Suspense پیچیده شده چون از useSearchParams استفاده می‌کنه */}
         <Suspense fallback={null}>
           <SearchBox />
         </Suspense>
@@ -52,33 +67,33 @@ export default async function HomePage({ searchParams }) {
 
       <div className="hp-container">
         {isOffline ? (
-          // Server is unavailable
+          // سرور در دسترس نیست
           <div className="hp-empty">
             <p>⏳ سرور در حال بروزرسانی است، به زودی برمی‌گردیم</p>
           </div>
         ) : filteredPosts.length > 0 ? (
-          // Display article cards
+          // نمایش کارت‌های مقاله
           <div className="hp-grid">
             {filteredPosts.map((post) => (
               <article key={post._id} className="hp-card">
-                {/* Post thumbnail image */}
+                {/* تامبنیل پست */}
                 <div className="hp-card-img-wrap">
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/thumbnails/${post.thumbnail}`}
+                    src={`${post.thumbnail}`}
                     alt={post.title}
                     className="hp-card-img"
-                    loading="lazy" // lazy load for better performance
+                    loading="lazy" // لیزی لود برای عملکرد بهتر
                   />
                 </div>
 
                 <div className="hp-card-body">
                   <h2 className="hp-card-title">{post.title}</h2>
 
-                  {/* Post excerpt with HTML tags stripped */}
+                  {/* خلاصه پست با تگ‌ها و موجودیت‌های HTML پاک‌سازی شده */}
                   <p className="hp-card-excerpt">{stripHtml(post.body)}...</p>
 
                   <div className="hp-card-footer">
-                    {/* Publication date in Jalali (Persian) format */}
+                    {/* تاریخ انتشار به صورت شمسی */}
                     <span className="hp-card-meta">
                       {new Date(post.createdAt).toLocaleDateString("fa-IR")}
                     </span>
@@ -92,7 +107,7 @@ export default async function HomePage({ searchParams }) {
             ))}
           </div>
         ) : (
-          // No posts found for this filter
+          // هیچ نتیجه‌ای برای این فیلتر پیدا نشد
           <div className="hp-empty">
             <p>هیچ نتیجه‌ای برای &ldquo;{filter}&rdquo; یافت نشد</p>
           </div>
