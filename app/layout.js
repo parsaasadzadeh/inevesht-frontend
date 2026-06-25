@@ -18,6 +18,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fa" dir="rtl" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
+    <head>
+    <meta name="google-site-verification" content="DOajKIcdPAy8iXHtR35LNOFAmdoTQZ8_WByEIJcDERo" />
+    </head>
         <Navbar />
         {children}
         <Footer />
