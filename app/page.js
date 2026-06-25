@@ -1,22 +1,91 @@
-// صفحه اصلی وبلاگ - نمایش لیست مقالات با قابلیت فیلتر
-// این یک Server Component است و داده‌ها رو مستقیم از API می‌گیره
 
 import Link from "next/link";
 import { getAllPosts } from "./services/api";
 import SearchBox from "./components/searchBox";
 import { Suspense } from "react";
 
-// متادیتای صفحه برای سئو
+const siteUrl = "https://inevesht.ir";
+const siteName = "inevesht";
+
 export const metadata = {
-  title: "آخرین مقالات | وبلاگ من",
-  description: "جدیدترین مطالب آموزشی و تحلیلی را اینجا بخوانید",
+  
+  title: {
+    default: `${siteName} | مرجع آموزش، تحلیل و ایده‌های کاربردی`,
+    template: `%s | ${siteName}`, 
+  },
+
+  description:
+    "وبلاگ inevesht، منبعی برای یادگیری و الهام‌گرفتن: از آموزش‌های عملی و تحلیل‌های تخصصی تا یادداشت‌های سبک زندگی. هر هفته مطالب تازه برای کسانی که دوست دارن بهتر یاد بگیرن و بهتر زندگی کنن.",
+
+  keywords: [
+    "inevesht",
+    "وبلاگ آموزشی",
+    "مقالات تحلیلی",
+    "آموزش آنلاین",
+    "محتوای کاربردی",
+    "ایده و الهام",
+  ],
+
+  authors: [{ name: "inevesht" }],
+  creator: "inevesht",
+  publisher: "inevesht",
+
+  metadataBase: new URL(siteUrl),
+
+  alternates: {
+    canonical: "/",
+  },
+
+  openGraph: {
+    type: "website",
+    locale: "fa_IR",
+    url: siteUrl,
+    siteName: siteName,
+    title: `${siteName} | مرجع آموزش، تحلیل و ایده‌های کاربردی`,
+    description:
+      "جدیدترین مطالب آموزشی، تحلیلی و کاربردی وبلاگ inevesht را اینجا بخوانید.",
+    images: [
+      {
+        url: "/og-image.jpg", 
+        width: 1200,
+        height: 630,
+        alt: "inevesht",
+      },
+    ],
+  },
+
+  
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteName} | مرجع آموزش، تحلیل و ایده‌های کاربردی`,
+    description:
+      "جدیدترین مطالب آموزشی، تحلیلی و کاربردی وبلاگ inevesht را اینجا بخوانید.",
+    images: ["/og-image.jpg"],   
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+    },
+  },
+
+  
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
-// صفحه هر ۶۰ ثانیه یک‌بار به‌روزرسانی می‌شه (ISR)
+
+
 export const revalidate = 60;
 
 export default async function HomePage({ searchParams }) {
-  // searchParams رو await می‌کنیم چون از Next.js 15 به بعد async شده
+  
   const params = await searchParams;
   const filter = params?.filter || "";
 
