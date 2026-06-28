@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { createPost, uploadImage } from "../../services/api";
+import { createPost, uploadImage, triggerRevalidate  } from "../../services/api";
 
 // Dynamically import ReactQuill to avoid SSR issues (Quill requires browser APIs)
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -110,6 +110,7 @@ export default function AddPostPage() {
 
     try {
       await createPost(token, data);
+     await triggerRevalidate();
       setSuccess("پست با موفقیت ایجاد شد!");
       // Reset all form fields after successful creation
       setFormData({ title: "", body: "", status: "public", thumbnail: null });
