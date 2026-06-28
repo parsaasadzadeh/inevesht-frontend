@@ -2,7 +2,6 @@ import { getAllPosts } from "./services/api";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://inevesht.ir";
 
-// این خط رو اضافه کن تا روت سایت‌مپ هر ۶۰ ثانیه دوباره ساخته شه
 export const revalidate = 60;
 
 export default async function sitemap() {
@@ -14,7 +13,8 @@ export default async function sitemap() {
   try {
     const data = await getAllPosts();
     postPages = (data?.posts || []).map((post) => ({
-      url: `${BASE_URL}/post/${post.slug}`,
+      // encodeURI کاراکترهای فارسی، ؟، و باقی موارد غیرمجاز توی URL/XML رو درست انکود می‌کند
+      url: encodeURI(`${BASE_URL}/post/${post.slug}`),
       lastModified: new Date(post.updatedAt || post.createdAt),
       changeFrequency: "weekly",
       priority: 0.8,
