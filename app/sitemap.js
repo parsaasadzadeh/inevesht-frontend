@@ -2,6 +2,9 @@ import { getAllPosts } from "./services/api";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://inevesht.ir";
 
+// این خط رو اضافه کن تا روت سایت‌مپ هر ۶۰ ثانیه دوباره ساخته شه
+export const revalidate = 60;
+
 export default async function sitemap() {
   const staticPages = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
