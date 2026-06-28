@@ -1,14 +1,11 @@
 // services/api.js
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://inevesht-backend-weblog.vercel.app";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://inevesht.ir";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 async function fetchApi(endpoint, options = {}) {
     try {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             ...options,
-            // داده‌ی این فچ حداکثر ۶۰ ثانیه کش می‌شه، نه برای همیشه
-            next: { revalidate: 60, ...(options.next || {}) },
             headers: {
                 "Content-Type": "application/json",
                 ...options.headers,
@@ -27,7 +24,6 @@ async function fetchApi(endpoint, options = {}) {
     }
 }
 
-// ... (بقیه‌ی توابع register/login/forgotPassword/... بدون تغییر باقی می‌مونن) ...
 
 export const registerUser = async (userData) => {
     return await fetchApi("/users/register", {
@@ -43,6 +39,7 @@ export const loginUser = async (credentials) => {
     });
 };
 
+
 export const forgotPassword = async (email) => {
     return await fetchApi("/users/forget-password", {
         method: "POST",
@@ -56,6 +53,8 @@ export const resetPassword = async (token, newPassword) => {
         body: JSON.stringify({ password: newPassword }),
     });
 };
+
+
 
 // Fetch all public posts
 export const getAllPosts = async () => {
@@ -78,6 +77,7 @@ export const sendContactMessage = async (data) => {
 
 // Fetch dashboard posts (requires auth token)
 export const getDashboardPosts = async (token) => {
+    // Changed http://localhost:5000 to BASE_URL
     const res = await fetch(`${BASE_URL}/dashboard`, {
         method: "GET",
         headers: {
@@ -101,8 +101,12 @@ export const getCaptcha = async () => {
     return data;
 };
 
+
+
+
 // Dashboard
 export const createPost = async (token, formData) => {
+    // Fixed: using BASE_URL instead of the environment variable directly
     const res = await fetch(`${BASE_URL}/dashboard/add-post`, {
         method: "POST",
         headers: {
@@ -111,6 +115,7 @@ export const createPost = async (token, formData) => {
         body: formData,
     });
 
+    // Read the raw response text first so we don't crash if the body isn't JSON
     const textResponse = await res.text();
     
     try {
@@ -118,6 +123,7 @@ export const createPost = async (token, formData) => {
         if (!res.ok) throw new Error(data.message || "خطا در ساخت پست");
         return data;
     } catch (error) {
+        // If the server returned something other than JSON (e.g. a plain error string), catch it here
         console.error("پاسخ سرور JSON نبود. جواب سرور این بود:", textResponse);
         throw new Error(`خطای بک‌اند: ${textResponse.substring(0, 60)}`);
     }
@@ -142,8 +148,9 @@ export const deletePost = async (token, slug) => {
 
 export const uploadImage = async (token, file) => {
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", file); // The key the backend expects for the image (usually "image")
 
+    // Note: your BASE_URL for the API is likely http://localhost:5000
     const response = await fetch(`${BASE_URL}/dashboard/image-upload`, { 
         method: "POST",
         headers: {
@@ -161,23 +168,30 @@ export const uploadImage = async (token, file) => {
             throw new Error(data.message || "آپلود تصویر شکست خورد");
         }
 
+        // 1. Extract the image name or path returned by the backend
         let imagePath = data.imageUrl || data.url || data.path || data.image || data.name; 
 
+        // 2. Build the full, correct URL for the editor
         if (imagePath && !imagePath.startsWith("http")) {
+            // Fix backslashes on Windows paths
             imagePath = imagePath.replace(/\\/g, "/"); 
             
+            // Remove leading slash if present
             if (imagePath.startsWith("/")) {
                 imagePath = imagePath.substring(1);
             }
 
+            // If the backend only returns the filename, prepend "uploads/"
             if (!imagePath.startsWith("uploads/")) {
                  imagePath = `uploads/${imagePath}`;
             }
 
+            // Most important part: prepend the full backend URL (port 5000)
+            // so the browser knows to load the image from the backend, not the frontend
             imagePath = `${BASE_URL}/${imagePath}`;
         }
 
-        return imagePath;
+        return imagePath; // This full URL is returned to the Quill editor
         
     } catch (error) {
         console.error("خطای سرور هنگام آپلود عکس:", textResponse);
@@ -185,7 +199,9 @@ export const uploadImage = async (token, file) => {
     }
 };
 
+
 export const editPost = async (token, slug, formData) => {
+    // Note: if your backend uses POST for updates, change "PUT" to "POST"
     const res = await fetch(`${BASE_URL}/dashboard/edit-post/${slug}`, {
         method: "PUT", 
         headers: {
@@ -202,17 +218,5 @@ export const editPost = async (token, slug, formData) => {
     } catch (error) {
         console.error("پاسخ سرور JSON نبود:", textResponse);
         throw new Error(`خطای بک‌اند در ویرایش: ${textResponse.substring(0, 60)}`);
-    }
-};
-
-// آپدیت فوری سایت‌مپ و صفحه‌ی اصلی بعد از ساخت/ویرایش/حذف پست
-export const triggerRevalidate = async () => {
-    try {
-        await fetch(`${SITE_URL}/api/revalidate?secret=${process.env.NEXT_PUBLIC_REVALIDATE_SECRET || ""}`, {
-            method: "POST",
-        });
-    } catch (err) {
-        // اگه این فچ شکست بخوره، فقط لاگ می‌کنیم؛ نمی‌خوایم تجربه‌ی کاربر مدیر رو خراب کنیم
-        console.error("Revalidate trigger failed:", err);
     }
 };
