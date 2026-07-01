@@ -1,8 +1,7 @@
 import { getAllPosts } from "./services/api";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://inevesht.ir";
-
-export const dynamic = "force-dynamic"; // یا revalidate = 60 اگه تاخیر کوتاه قابل قبوله
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://inevesht.ir";
 
 export default async function sitemap() {
   const staticPages = [
@@ -14,20 +13,21 @@ export default async function sitemap() {
     },
   ];
 
+  let postPages = [];
+
   try {
     const data = await getAllPosts();
-    const posts = data?.posts || [];
 
-    const postPages = posts.map((post) => ({
-      url: `${BASE_URL}/post/${encodeURIComponent(post.slug)}`, // 👈 این خط هنوز باقی مونده
+    postPages = (data?.posts || []).map((post) => ({
+      url: `${BASE_URL}/post/${post.slug}`,
       lastModified: new Date(post.updatedAt || post.createdAt),
       changeFrequency: "weekly",
       priority: 0.8,
     }));
-
-    return [...staticPages, ...postPages];
-  } catch (err) {
-    console.error("خطا در ساخت sitemap:", err);
-    return staticPages;
+  } catch (error) {
+    console.error("Error generating sitemap:", error);
+    postPages = [];
   }
+
+  return [...staticPages, ...postPages];
 }
