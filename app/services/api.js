@@ -1,7 +1,7 @@
 // services/api.js
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
+// services/api.js
 async function fetchApi(endpoint, options = {}) {
     try {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -10,6 +10,7 @@ async function fetchApi(endpoint, options = {}) {
                 "Content-Type": "application/json",
                 ...options.headers,
             },
+            next: { revalidate: 60 }, // 👈 اضافه شد
         });
 
         const data = await response.json();
@@ -20,7 +21,8 @@ async function fetchApi(endpoint, options = {}) {
 
         return data;
     } catch (error) {
-        return null; 
+        console.error(`خطا در fetchApi (${endpoint}):`, error); // 👈 دیگه ساکت رد نکن
+        return null;
     }
 }
 
