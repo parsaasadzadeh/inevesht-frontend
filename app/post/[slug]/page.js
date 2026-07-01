@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { getSinglePost, getAllPosts } from "../../services/api";
 import { notFound } from "next/navigation";
+
 export async function generateStaticParams() {
   try {
     const data = await getAllPosts();
     const posts = data?.posts || [];
     return posts
-      .filter((post) => post?.slug) 
+      .filter((post) => post?.slug)
       .map((post) => ({
-        slug: post.slug,
+        slug: encodeURIComponent(post.slug),
       }));
   } catch (err) {
     console.error("generateStaticParams failed:", err);
@@ -18,28 +19,26 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
 
   try {
-    const data = await getSinglePost(slug);
+    const data = await getSinglePost(decodedSlug);
     const post = data?.post;
 
-    if (!post) {
-      return { title: "مقاله یافت نشد" };
-    }
+    if (!post) return { title: "مقاله یافت نشد" };
 
     const plainText = (post.body || "").replace(/<[^>]+>/g, "").substring(0, 160);
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
 
     return {
       title: `${post.title} | وبلاگ من`,
       description: plainText,
       openGraph: {
         title: post.title,
-        images: post.thumbnail ? [`${post.thumbnail}`] : [],
+        images: post.thumbnail ? [post.thumbnail] : [],
       },
     };
   } catch (err) {
-    console.error("generateMetadata failed for slug:", slug, err);
+    console.error("generateMetadata failed for slug:", decodedSlug, err);
     return { title: "مقاله یافت نشد" };
   }
 }
@@ -48,38 +47,38 @@ export const revalidate = 60;
 
 export default async function SinglePost({ params }) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
 
-  if (!slug) {
-    notFound();
-  }
+  if (!decodedSlug) notFound();
 
   let post = null;
 
   try {
-    const data = await getSinglePost(slug);
+    const data = await getSinglePost(decodedSlug);
     post = data?.post || null;
   } catch (err) {
-
-    console.error("SinglePost fetch failed for slug:", slug, err);
+    console.error("SinglePost fetch failed for slug:", decodedSlug, err);
     notFound();
   }
 
-  if (!post) {
-    notFound();
-  }
-
+  if (!post) notFound();
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
-    image: post.thumbnail ? `${baseUrl}/uploads/thumbnails/${post.thumbnail}` : undefined,
+    image: post.thumbnail
+      ? `${baseUrl}/uploads/thumbnails/${post.thumbnail}`
+      : undefined,
     datePublished: post.createdAt,
-    author: { "@type": "Person", name: post.user?.fullname || "مدیر سایت" },
+    author: {
+      "@type": "Person",
+      name: post.user?.fullname || "مدیر سایت",
+    },
   };
 
-  
   let formattedDate = "";
   try {
     formattedDate = post.createdAt
@@ -105,7 +104,6 @@ export default async function SinglePost({ params }) {
               <button className="sp-subscribe-btn">ثبت</button>
             </div>
           </aside>
-
           <main className="sp-main">
             {post.thumbnail && (
               <figure className="sp-hero-figure">
@@ -116,7 +114,6 @@ export default async function SinglePost({ params }) {
                 />
               </figure>
             )}
-
             <article className="sp-article">
               <h1 className="sp-article-title">{post.title}</h1>
               <div className="sp-article-meta">
@@ -128,7 +125,6 @@ export default async function SinglePost({ params }) {
                 dangerouslySetInnerHTML={{ __html: post.body || "" }}
               />
             </article>
-
             <Link href="/" className="sp-back-link">
               → بازگشت به لیست مقالات
             </Link>
