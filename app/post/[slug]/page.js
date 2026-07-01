@@ -1,82 +1,68 @@
 import Link from "next/link";
 import { getSinglePost, getAllPosts } from "../../services/api";
 import { notFound } from "next/navigation";
-
 export async function generateStaticParams() {
   try {
     const data = await getAllPosts();
     const posts = data?.posts || [];
     return posts
-      .filter((post) => post?.slug)
+      .filter((post) => post?.slug) 
       .map((post) => ({
-        slug: encodeURIComponent(post.slug),
+        slug: post.slug,
       }));
   } catch (err) {
     console.error("generateStaticParams failed:", err);
     return [];
   }
 }
-
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const decodedSlug = decodeURIComponent(slug);
-
   try {
-    const data = await getSinglePost(decodedSlug);
+    const data = await getSinglePost(slug);
     const post = data?.post;
-
-    if (!post) return { title: "مقاله یافت نشد" };
-
+    if (!post) {
+      return { title: "مقاله یافت نشد" };
+    }
     const plainText = (post.body || "").replace(/<[^>]+>/g, "").substring(0, 160);
-
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
     return {
-      title: `${post.title} | وبلاگ من`,
+      title: ${post.title} | وبلاگ من,
       description: plainText,
       openGraph: {
         title: post.title,
-        images: post.thumbnail ? [post.thumbnail] : [],
+        images: post.thumbnail ? [${post.thumbnail}] : [],
       },
     };
   } catch (err) {
-    console.error("generateMetadata failed for slug:", decodedSlug, err);
+    console.error("generateMetadata failed for slug:", slug, err);
     return { title: "مقاله یافت نشد" };
   }
 }
-
 export const revalidate = 60;
-
 export default async function SinglePost({ params }) {
   const { slug } = await params;
-  const decodedSlug = decodeURIComponent(slug);
-
-  if (!decodedSlug) notFound();
-
-  let post = null;
-
-  try {
-    const data = await getSinglePost(decodedSlug);
-    post = data?.post || null;
-  } catch (err) {
-    console.error("SinglePost fetch failed for slug:", decodedSlug, err);
+  if (!slug) {
     notFound();
   }
-
-  if (!post) notFound();
-
+  let post = null;
+  try {
+    const data = await getSinglePost(slug);
+    post = data?.post || null;
+  } catch (err) {
+    console.error("SinglePost fetch failed for slug:", slug, err);
+    notFound();
+  }
+  if (!post) {
+    notFound();
+  }
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
-    image: post.thumbnail
-      ? `${baseUrl}/uploads/thumbnails/${post.thumbnail}`
-      : undefined,
+    image: post.thumbnail ? ${baseUrl}/uploads/thumbnails/${post.thumbnail} : undefined,
     datePublished: post.createdAt,
-    author: {
-      "@type": "Person",
-      name: post.user?.fullname || "مدیر سایت",
-    },
+    author: { "@type": "Person", name: post.user?.fullname || "مدیر سایت" },
   };
 
   let formattedDate = "";
@@ -87,7 +73,6 @@ export default async function SinglePost({ params }) {
   } catch {
     formattedDate = "";
   }
-
   return (
     <>
       <script
