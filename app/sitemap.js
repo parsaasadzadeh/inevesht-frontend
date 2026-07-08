@@ -1,35 +1,40 @@
-import { getAllPosts } from "./services/api";
+import { getAllPosts } from "../services/api";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://inevesht.ir";
+// این خط خیلی مهمه: باعث می‌شه سایت‌مپ هر ۶۰ ثانیه رفرش بشه (ISR)
+// بدون این، سایت‌مپ فقط یک‌بار موقع build ساخته می‌شه و پست جدید توش نمیاد
+export const revalidate = 60;
 
 export default async function sitemap() {
-  const staticPages = [
+  const baseUrl = "https://yourdomain.com"; // 👈 دامنه واقعی سایت‌تون رو بذارید (بدون اسلش آخر)
+
+  // صفحات ثابت
+  const staticRoutes = [
     {
-      url: BASE_URL,
+      url: baseUrl,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1,
     },
+    // اینجا صفحات ثابت دیگه رو هم اضافه کنید (درباره ما، تماس با ما و ...)
   ];
 
-
-  
-  let postPages = [];
-
+  // گرفتن پست‌ها از بک‌اند
+  let postRoutes = [];
   try {
     const data = await getAllPosts();
+    const posts = data?.posts || [];
 
-    postPages = (data?.posts || []).map((post) => ({
-      url: `${BASE_URL}/post/${post.slug}`,
-      lastModified: new Date(post.updatedAt || post.createdAt),
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }));
-  } catch (error) {
-    console.error("Error generating sitemap:", error);
-    postPages = [];
+    postRoutes = posts
+      .filter((post) => post?.slug) // فقط پست‌هایی که slug دارن
+      .map((post) => ({
+        url: `${baseUrl}/${post.slug}`,
+        lastModified: post.updatedAt || post.createdAt || new Date(),
+        changeFrequency: "weekly",
+        priority: 0.8,
+      }));
+  } catch (err) {
+    console.error("sitemap: fetching posts failed", err);
   }
 
-  return [...staticPages, ...postPages];
+  return [...staticRoutes, ...postRoutes];
 }
