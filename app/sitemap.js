@@ -5,7 +5,7 @@ import { getAllPosts } from "./services/api";
 export const revalidate = 60;
 
 export default async function sitemap() {
-  const baseUrl = "https://inevesht.ir"; // 👈 دامنه واقعی سایت‌تون رو بذارید (بدون اسلش آخر)
+  const baseUrl = "https://inevesht.ir"; // دامنه واقعی سایت (بدون اسلش آخر)
 
   // صفحات ثابت
   const staticRoutes = [
@@ -27,7 +27,9 @@ export default async function sitemap() {
     postRoutes = posts
       .filter((post) => post?.slug) // فقط پست‌هایی که slug دارن
       .map((post) => ({
-        url: `${baseUrl}/${post.slug}`,
+        // توجه: چون فایل صفحه‌ی پست توی app/post/[slug]/page.js هست،
+        // آدرس واقعی هر پست باید /post/اسم-پست باشه، نه فقط /اسم-پست
+        url: `${baseUrl}/post/${post.slug}`,
         lastModified: post.updatedAt || post.createdAt || new Date(),
         changeFrequency: "weekly",
         priority: 0.8,
