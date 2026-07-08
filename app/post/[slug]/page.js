@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { getSinglePost, getAllPosts } from "../../services/api";
 import { notFound } from "next/navigation";
+
 export async function generateStaticParams() {
   try {
     const data = await getAllPosts();
     const posts = data?.posts || [];
     return posts
-      .filter((post) => post?.slug) 
+      .filter((post) => post?.slug)
       .map((post) => ({
         slug: post.slug,
       }));
@@ -15,6 +16,7 @@ export async function generateStaticParams() {
     return [];
   }
 }
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   try {
@@ -26,11 +28,11 @@ export async function generateMetadata({ params }) {
     const plainText = (post.body || "").replace(/<[^>]+>/g, "").substring(0, 160);
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
     return {
-      title: ${post.title} | وبلاگ من,
+      title: `${post.title} | وبلاگ من`,
       description: plainText,
       openGraph: {
         title: post.title,
-        images: post.thumbnail ? [${post.thumbnail}] : [],
+        images: post.thumbnail ? [`${post.thumbnail}`] : [],
       },
     };
   } catch (err) {
@@ -38,7 +40,9 @@ export async function generateMetadata({ params }) {
     return { title: "مقاله یافت نشد" };
   }
 }
+
 export const revalidate = 60;
+
 export default async function SinglePost({ params }) {
   const { slug } = await params;
   if (!slug) {
@@ -60,11 +64,10 @@ export default async function SinglePost({ params }) {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
-    image: post.thumbnail ? ${baseUrl}/uploads/thumbnails/${post.thumbnail} : undefined,
+    image: post.thumbnail ? `${baseUrl}/uploads/thumbnails/${post.thumbnail}` : undefined,
     datePublished: post.createdAt,
     author: { "@type": "Person", name: post.user?.fullname || "مدیر سایت" },
   };
-
   let formattedDate = "";
   try {
     formattedDate = post.createdAt
