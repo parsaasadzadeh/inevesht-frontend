@@ -1,4 +1,4 @@
-import { getAllPosts } from "../services/api";
+import { getAllPosts } from "./services/api";
 
 // این خط خیلی مهمه: باعث می‌شه سایت‌مپ هر ۶۰ ثانیه رفرش بشه (ISR)
 // بدون این، سایت‌مپ فقط یک‌بار موقع build ساخته می‌شه و پست جدید توش نمیاد
