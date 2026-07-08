@@ -5,7 +5,7 @@ import { getAllPosts } from "../services/api";
 export const revalidate = 60;
 
 export default async function sitemap() {
-  const baseUrl = "https://yourdomain.com"; // 👈 دامنه واقعی سایت‌تون رو بذارید (بدون اسلش آخر)
+  const baseUrl = "https://inevesht.ir"; // 👈 دامنه واقعی سایت‌تون رو بذارید (بدون اسلش آخر)
 
   // صفحات ثابت
   const staticRoutes = [
