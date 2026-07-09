@@ -65,7 +65,7 @@ export const getAllPosts = async () => {
 };
 
 export const getSinglePost = async (slug) => {
-    return await fetchApi(`/post/${encodeURIComponent(slug)}`);
+    return await fetchApi(`/post/${slug}`);
 };
 
 // Send a contact form message
